@@ -108,9 +108,35 @@ int main()
 		// otherwise apply back-projection and transform the vertex to world space, use the corresponding color from the colormap
 		Vertex* vertices = new Vertex[sensor.GetDepthImageWidth() * sensor.GetDepthImageHeight()];
 
+		int width = sensor.GetDepthImageWidth();
+		int height = sensor.GetDepthImageHeight();
 
+		for(int y = 0; y < height; y++)
+		{
+			for(int x = 0; x < width; x++)
+			{
+				const int index = y * width + x;
+				Vector4f position;
+				Vector4uc color;
 
-
+				if(depthMap[index] == MINF)
+				{
+					position = Vector4f(MINF, MINF, MINF, MINF);
+					color = Vector4uc(0, 0, 0, 0);
+				}
+				else
+				{
+					Vector3f temp = depthIntrinsics.inverse() * Vector3f(float(x), float(y), depthMap[index]);
+					position = Vector4f(temp.x(), temp.y(), temp.z(), 1.0f);
+					position = trajectoryInv * depthExtrinsicsInv * position;
+					std::cout << position << std::endl;
+					color = Vector4uc(colorMap[index * 4], colorMap[index * 4 + 1], colorMap[index * 4 + 2], colorMap[index * 4 + 3]);					
+				}
+				
+				vertices[index].position = position;
+				vertices[index].color = color;
+			}
+		}
 
 
 
