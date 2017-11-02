@@ -31,28 +31,18 @@ bool WriteMesh(Vertex* vertices, unsigned int width, unsigned int height, const 
 	unsigned int nVertices = width * height;
 
 	// TODO: Get number of faces
-	unsigned nFaces = (width - 1) * (height - 1) * 2;
-
-
-
-
-	// Write off file
-	std::ofstream outFile(filename);
-	if (!outFile.is_open()) return false;
-
-	// write header
-	outFile << "COFF" << std::endl;
-	outFile << nVertices << " " << nFaces << " 0" << std::endl;
+	unsigned nFaces = 0;
+	std::stringstream ss = std::stringstream();
 
 	// TODO: save vertices
-	for(int y = 0; y < height; y++)
+	for (int y = 0; y < height; y++)
 	{
-		for(int x = 0; x < width; x++)
+		for (int x = 0; x < width; x++)
 		{
-			Vector4f pos = vertices[y * width + x].position.x() != MINF ? vertices[y * width + x].position : Vector4f(0,0,0,0);
+			Vector4f pos = vertices[y * width + x].position.x() != MINF ? vertices[y * width + x].position : Vector4f(0, 0, 0, 0);
 			Vector4uc color = vertices[y * width + x].color;
-			outFile << pos[0] << " " << pos[1] << " " << pos[2] << " ";
-			outFile << static_cast<int>(color[0]) << " " << static_cast<int>(color[1]) << " " << static_cast<int>(color[2]) << " " << static_cast<int>(color[3]) << std::endl;
+			ss << pos[0] << " " << pos[1] << " " << pos[2] << " ";
+			ss << static_cast<int>(color[0]) << " " << static_cast<int>(color[1]) << " " << static_cast<int>(color[2]) << " " << static_cast<int>(color[3]) << std::endl;
 		}
 	}
 
@@ -70,7 +60,10 @@ bool WriteMesh(Vertex* vertices, unsigned int width, unsigned int height, const 
 				&& (v2 - v1).norm() < edgeThreshold
 				&& (v2 - v3).norm() < edgeThreshold
 				&& (v3 - v1).norm() < edgeThreshold)
-				outFile << 3 << " " << i << " " << i + width << " " << i + 1 << std::endl;
+			{
+				ss << 3 << " " << i << " " << i + width << " " << i + 1 << std::endl;
+				nFaces++;
+			}
 
 			v1 = vertices[i + width].position;
 			v2 = vertices[i + 1 + width].position;
@@ -80,13 +73,21 @@ bool WriteMesh(Vertex* vertices, unsigned int width, unsigned int height, const 
 				&& (v2 - v1).norm() < edgeThreshold
 				&& (v2 - v3).norm() < edgeThreshold
 				&& (v3 - v1).norm() < edgeThreshold)
-				outFile << 3 << " " << i + width << " " << i + 1 + width << " " << i + 1 << std::endl;
+			{
+				ss << 3 << " " << i + width << " " << i + 1 + width << " " << i + 1 << std::endl;
+				nFaces++;
+			}
 		}
 	}
+	
+	// Write off file
+	std::ofstream outFile(filename);
+	if (!outFile.is_open()) return false;	
 
-
-
-
+	// write header
+	outFile << "COFF" << std::endl;
+	outFile << nVertices << " " << nFaces << " 0" << std::endl;
+	outFile << ss.rdbuf();
 
 	// close file
 	outFile.close();
@@ -157,9 +158,10 @@ int main()
 				}
 				else
 				{
-					Vector3f temp = depthIntrinsics.inverse() * Vector3f(float(x), float(y), depthMap[index]);
+					Vector3f temp = depthIntrinsics.inverse() * Vector3f(float(x)* depthMap[index], float(y)* depthMap[index], depthMap[index]);
 					position = Vector4f(temp.x(), temp.y(), temp.z(), 1.0f);
-					position = trajectoryInv * depthExtrinsicsInv * position;
+					position = depthExtrinsicsInv * position;
+					position = trajectory * position;
 					//std::cout << position << std::endl;
 					color = Vector4uc(colorMap[index * 4], colorMap[index * 4 + 1], colorMap[index * 4 + 2], colorMap[index * 4 + 3]);					
 				}
