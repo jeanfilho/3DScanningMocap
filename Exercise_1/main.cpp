@@ -28,10 +28,10 @@ bool WriteMesh(Vertex* vertices, unsigned int width, unsigned int height, const 
 	// - only write triangles with valid vertices and an edge length smaller then edgeThreshold
 
 	// TODO: Get number of vertices
-	unsigned int nVertices = 0;
+	unsigned int nVertices = width * height;
 
 	// TODO: Get number of faces
-	unsigned nFaces = 0;
+	unsigned nFaces = (width - 1) * (height - 1) * 2;
 
 
 
@@ -45,13 +45,44 @@ bool WriteMesh(Vertex* vertices, unsigned int width, unsigned int height, const 
 	outFile << nVertices << " " << nFaces << " 0" << std::endl;
 
 	// TODO: save vertices
-
-
-
-
+	for(int y = 0; y < height; y++)
+	{
+		for(int x = 0; x < width; x++)
+		{
+			Vector4f pos = vertices[y * width + x].position.x() != MINF ? vertices[y * width + x].position : Vector4f(0,0,0,0);
+			Vector4uc color = vertices[y * width + x].color;
+			outFile << pos[0] << " " << pos[1] << " " << pos[2] << " ";
+			outFile << static_cast<int>(color[0]) << " " << static_cast<int>(color[1]) << " " << static_cast<int>(color[2]) << " " << static_cast<int>(color[3]) << std::endl;
+		}
+	}
 
 	// TODO: save faces
+	for (int y = 0; y < height - 1; y++)
+	{
+		for (int x = 0; x < width - 1; x++)
+		{
+			const int i = y * width + x;
+			Vector4f v1 = vertices[i].position;
+			Vector4f v2 = vertices[i + width].position;
+			Vector4f v3 = vertices[i + 1].position;
 
+			if (v1[0] != MINF && v2[0] != MINF && v3[0] != MINF
+				&& (v2 - v1).norm() < edgeThreshold
+				&& (v2 - v3).norm() < edgeThreshold
+				&& (v3 - v1).norm() < edgeThreshold)
+				outFile << 3 << " " << i << " " << i + width << " " << i + 1 << std::endl;
+
+			v1 = vertices[i + width].position;
+			v2 = vertices[i + 1 + width].position;
+			v3 = vertices[i + 1].position;
+
+			if (v1[0] != MINF && v2[0] != MINF && v3[0] != MINF
+				&& (v2 - v1).norm() < edgeThreshold
+				&& (v2 - v3).norm() < edgeThreshold
+				&& (v3 - v1).norm() < edgeThreshold)
+				outFile << 3 << " " << i + width << " " << i + 1 + width << " " << i + 1 << std::endl;
+		}
+	}
 
 
 
@@ -129,7 +160,7 @@ int main()
 					Vector3f temp = depthIntrinsics.inverse() * Vector3f(float(x), float(y), depthMap[index]);
 					position = Vector4f(temp.x(), temp.y(), temp.z(), 1.0f);
 					position = trajectoryInv * depthExtrinsicsInv * position;
-					std::cout << position << std::endl;
+					//std::cout << position << std::endl;
 					color = Vector4uc(colorMap[index * 4], colorMap[index * 4 + 1], colorMap[index * 4 + 2], colorMap[index * 4 + 3]);					
 				}
 				
