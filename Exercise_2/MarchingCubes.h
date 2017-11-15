@@ -342,7 +342,12 @@ Vector3d VertexInterp(double isolevel, const Vector3d& p1, const Vector3d& p2, d
 	// x
 	// f(p1) = valp1
 
-	return (p1+p2)/2; // replace me
+	double intValue = std::abs((isolevel - valp1) / (valp2 - valp1));
+
+	Vector3d result = p1 + (p2 - p1) * intValue;
+
+	//return (p1+p2)/2; // replace me
+	return result;
 }
 
 /*
