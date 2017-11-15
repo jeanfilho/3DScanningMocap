@@ -53,15 +53,9 @@ int main()
 	if (!mesh.WriteMesh(filenameOut))
 	{
 		std::cout << "ERROR: unable to write output file!" << std::endl;
-		std::string stop;
-		std::cin >> stop;
 		return -1;
 	}
 
 	delete surface;
-	std::string stop;
-	std::cin >> stop;
-
-
 	return 0;
 }
