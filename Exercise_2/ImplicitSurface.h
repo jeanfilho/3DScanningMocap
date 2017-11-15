@@ -100,7 +100,7 @@ public:
 
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	FunctionSamples() {}
+		FunctionSamples() {}
 
 	void insertSample(const Vector3d& pos, const double targetFunctionValue)
 	{
@@ -146,7 +146,7 @@ public:
 			eps *= -1;
 		}
 
-		m_numCenters = (unsigned int) m_pointcloud.GetPoints().size();
+		m_numCenters = (unsigned int)m_pointcloud.GetPoints().size();
 		const unsigned int dim = m_numCenters + 4;
 
 		// build and solve the linear system of equations
@@ -164,8 +164,15 @@ public:
 		// the following parameters are the coeffients for the linear and the constant part
 		// the centers of the RBFs are the first m_numCenters sample points (use m_funcSamp.m_pos[i] to access them)
 		// hint: Eigen provides a norm() function to compute the l2-norm of a vector (e.g. see macro phi(i,j))
-		double result = 0.0;
 
+		Vector3d b = Vector3d(m_coefficents[m_numCenters], m_coefficents[m_numCenters + 1], m_coefficents[m_numCenters + 2]);
+		const double d = m_coefficents[m_numCenters + 3];
+
+		double result = 0.0;
+		for (unsigned int i = 0; i < m_numCenters; i++)
+			result += m_coefficents[i] * EvalBasis((m_funcSamp.m_pos[i] - _x).norm());
+
+		result += b.dot(_x) + d;
 
 		return result;
 	}
@@ -192,12 +199,27 @@ private:
 		// you can access matrix elements using for example A(i,j) for the i-th row and j-th column
 		// similar you access the elements of the vector b, e.g. b(i) for the i-th element
 
+		for (unsigned int j = 0; j < m_numCenters + 4; j++)
+		{
+			for (unsigned int i = 0; i < 2 * m_numCenters; i++)
+			{
+				if (j == m_numCenters)
+					A(i, j) = m_funcSamp.m_pos[i].x();
+				else if (j == m_numCenters + 1)
+					A(i, j) = m_funcSamp.m_pos[i].y();
+				else if (j == m_numCenters + 2)
+					A(i, j) = m_funcSamp.m_pos[i].z();
+				else if (j == m_numCenters + 3)
+					A(i, j) = 1;
+				else
+					A(i, j) = phi(i, j);
+			}
+		}
 
-
-
-
-
-
+		for (unsigned int i = 0; i < 2 * m_numCenters; i++)
+		{
+			b(i) = m_funcSamp.m_val[i];
+		}
 
 		// build the system matrix and the right hand side of the normal equation
 		m_systemMatrix = A.transpose() * A;
