@@ -117,9 +117,9 @@ public:
 		return true;
 	}
 
-	static ceres::CostFunction* create(const Vector3f& sourcePoint, const Vector3f& targetPoint, const float lambda) {
+	static ceres::CostFunction* create(const Vector3f& sourcePoint, const Vector3f& targetPoint, const float weight) {
 		return new ceres::AutoDiffCostFunction<PointToPointConstraint, 3, 6>(
-			new PointToPointConstraint(sourcePoint, targetPoint, lambda)
+			new PointToPointConstraint(sourcePoint, targetPoint, weight)
 		);
 	}
 
@@ -148,13 +148,13 @@ public:
 		// Important: Ceres automatically squares the cost function.
 
 		residuals[0] = T(0);
-
+		
 		return true;
 	}
 
-	static ceres::CostFunction* create(const Vector3f& sourcePoint, const Vector3f& sourceNormal, const Vector3f& targetPoint, const float lambda) {
+	static ceres::CostFunction* create(const Vector3f& sourcePoint, const Vector3f& targetPoint, const Vector3f& targetNormal, const float weight) {
 		return new ceres::AutoDiffCostFunction<PointToPlaneConstraint, 1, 6>(
-			new PointToPlaneConstraint(sourcePoint, sourceNormal,targetPoint, lambda)
+			new PointToPlaneConstraint(sourcePoint, targetPoint, targetNormal, weight)
 		);
 	}
 
@@ -294,7 +294,6 @@ private:
 					// TODO: Create a new point-to-plane cost function and add it as constraint (i.e. residual block) 
 					// to the Ceres problem.
 
-					
 				}
 			}
 		}

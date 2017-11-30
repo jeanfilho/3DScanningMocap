@@ -82,7 +82,6 @@ public:
 				}
 
 				// TODO: Compute the normals using central differences. 
-				// Important: Focus lengths fovX and fovY also need to be taken into account.
 
 				normalsTmp[idx] = Vector3f(1, 1, 1); // Needs to be replaced.
 				normalsTmp[idx].normalize();

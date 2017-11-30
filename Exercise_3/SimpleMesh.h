@@ -192,7 +192,7 @@ public:
 				// Colors are stored as integers. We need to convert them.
 				Vector4i colorInt;
 				file >> colorInt.x() >> colorInt.y() >> colorInt.z() >> colorInt.w();
-				v.color = Vector4uc{ unsigned char(colorInt.x()), unsigned char(colorInt.y()), unsigned char(colorInt.z()), unsigned char(colorInt.w()) };
+				v.color = Vector4uc((unsigned char)colorInt.x(), (unsigned char)colorInt.y(), (unsigned char)colorInt.z(), (unsigned char)colorInt.w());
 				m_vertices.push_back(v);
 			}
 		}
