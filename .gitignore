@@ -288,3 +288,4 @@ __pycache__/
 *.xsd.cs
 Exercise_1/data/
 Exercise_2/result.off
+Exercise_3/libs/
