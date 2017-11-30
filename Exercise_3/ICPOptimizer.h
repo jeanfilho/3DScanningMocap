@@ -109,10 +109,27 @@ public:
 		// increment (pose parameters) to the source point, you can use the PoseIncrement
 		// class.
 		// Important: Ceres automatically squares the cost function.
+		T sourceTemp[3];
+		sourceTemp[0] = T(m_sourcePoint.x());
+		sourceTemp[1] = T(m_sourcePoint.y());
+		sourceTemp[2] = T(m_sourcePoint.z());
 
-		residuals[0] = T(0);
-		residuals[1] = T(0);
-		residuals[2] = T(0);
+		T targetTemp[3];
+		targetTemp[0] = T(m_targetPoint.x());
+		targetTemp[1] = T(m_targetPoint.y());
+		targetTemp[2] = T(m_targetPoint.z());
+
+		T poseSourceTemp[3];
+		T poseTemp[6];
+		for (int i = 0; i < 6; i++)
+			poseTemp[i] = pose[i];
+		PoseIncrement<T> increment(poseTemp);
+
+		increment.apply(sourceTemp, poseSourceTemp);
+
+		residuals[0] = T(m_sourcePoint.x() + m_weight - m_targetPoint.x());
+		residuals[1] = T(m_sourcePoint.y() + m_weight - m_targetPoint.y());
+		residuals[2] = T(m_sourcePoint.z() + m_weight - m_targetPoint.z());
 
 		return true;
 	}
