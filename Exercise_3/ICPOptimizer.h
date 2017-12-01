@@ -117,9 +117,9 @@ public:
 		T sourceTransformed[3];
 		increment.apply(sourceTemp, sourceTransformed);
 
-		residuals[0] = (sourceTransformed[0] - targetTemp[0]);
-		residuals[1] = (sourceTransformed[1] - targetTemp[1]);
-		residuals[2] = (sourceTransformed[2] - targetTemp[2]);
+		residuals[0] = T(m_weight) * (sourceTransformed[0] - targetTemp[0]);
+		residuals[1] = T(m_weight) * (sourceTransformed[1] - targetTemp[1]);
+		residuals[2] = T(m_weight) * (sourceTransformed[2] - targetTemp[2]);
 
 		return true;
 	}
@@ -165,10 +165,10 @@ public:
 		T sourceTransformed[3];
 		increment.apply(sourceTemp, sourceTransformed);
 
-		residuals[0] = 
+		residuals[0] = T(m_weight) * (
 			(sourceTransformed[0] - targetTemp[0]) * normalTemp[0] +
 			(sourceTransformed[1] - targetTemp[1]) * normalTemp[1] +
-			(sourceTransformed[2] - targetTemp[2]) * normalTemp[2];
+			(sourceTransformed[2] - targetTemp[2]) * normalTemp[2]);
 
 		return true;
 	}
