@@ -32,7 +32,7 @@ template <typename T>
 class PoseIncrement {
 public:
 	explicit PoseIncrement(T* const array) : m_array{ array } { }
-	
+
 	void setZero() {
 		for (int i = 0; i < 6; ++i)
 			m_array[i] = T(0);
@@ -82,7 +82,7 @@ public:
 		matrix(0, 0) = float(rotationMatrix[0]);	matrix(0, 1) = float(rotationMatrix[3]);	matrix(0, 2) = float(rotationMatrix[6]);	matrix(0, 3) = float(translation[0]);
 		matrix(1, 0) = float(rotationMatrix[1]);	matrix(1, 1) = float(rotationMatrix[4]);	matrix(1, 2) = float(rotationMatrix[7]);	matrix(1, 3) = float(translation[1]);
 		matrix(2, 0) = float(rotationMatrix[2]);	matrix(2, 1) = float(rotationMatrix[5]);	matrix(2, 2) = float(rotationMatrix[8]);	matrix(2, 3) = float(translation[2]);
-		
+
 		return matrix;
 	}
 
@@ -110,26 +110,16 @@ public:
 		// class.
 		// Important: Ceres automatically squares the cost function.
 		T sourceTemp[3];
-		sourceTemp[0] = T(m_sourcePoint.x());
-		sourceTemp[1] = T(m_sourcePoint.y());
-		sourceTemp[2] = T(m_sourcePoint.z());
-
 		T targetTemp[3];
-		targetTemp[0] = T(m_targetPoint.x());
-		targetTemp[1] = T(m_targetPoint.y());
-		targetTemp[2] = T(m_targetPoint.z());
+		fillVector(m_sourcePoint, sourceTemp);
+		fillVector(m_targetPoint, targetTemp);
+		PoseIncrement<T> increment(const_cast<T* const>(pose));
+		T sourceTransformed[3];
+		increment.apply(sourceTemp, sourceTransformed);
 
-		T poseSourceTemp[3];
-		T poseTemp[6];
-		for (int i = 0; i < 6; i++)
-			poseTemp[i] = pose[i];
-		PoseIncrement<T> increment(poseTemp);
-
-		increment.apply(sourceTemp, poseSourceTemp);
-
-		residuals[0] = T(m_sourcePoint.x() + m_weight - m_targetPoint.x());
-		residuals[1] = T(m_sourcePoint.y() + m_weight - m_targetPoint.y());
-		residuals[2] = T(m_sourcePoint.z() + m_weight - m_targetPoint.z());
+		residuals[0] = (sourceTransformed[0] - targetTemp[0]);
+		residuals[1] = (sourceTransformed[1] - targetTemp[1]);
+		residuals[2] = (sourceTransformed[2] - targetTemp[2]);
 
 		return true;
 	}
@@ -137,7 +127,7 @@ public:
 	static ceres::CostFunction* create(const Vector3f& sourcePoint, const Vector3f& targetPoint, const float weight) {
 		return new ceres::AutoDiffCostFunction<PointToPointConstraint, 3, 6>(
 			new PointToPointConstraint(sourcePoint, targetPoint, weight)
-		);
+			);
 	}
 
 protected:
@@ -164,15 +154,29 @@ public:
 		// class.
 		// Important: Ceres automatically squares the cost function.
 
-		residuals[0] = T(0);
-		
+		T sourceTemp[3];
+		T targetTemp[3];
+		T normalTemp[3];
+		fillVector(m_sourcePoint, sourceTemp);
+		fillVector(m_targetPoint, targetTemp);
+		fillVector(m_targetNormal, normalTemp);
+
+		const PoseIncrement<T> increment(const_cast<T* const>(pose));
+		T sourceTransformed[3];
+		increment.apply(sourceTemp, sourceTransformed);
+
+		residuals[0] = 
+			(sourceTransformed[0] - targetTemp[0]) * normalTemp[0] +
+			(sourceTransformed[1] - targetTemp[1]) * normalTemp[1] +
+			(sourceTransformed[2] - targetTemp[2]) * normalTemp[2];
+
 		return true;
 	}
 
 	static ceres::CostFunction* create(const Vector3f& sourcePoint, const Vector3f& targetPoint, const Vector3f& targetNormal, const float weight) {
 		return new ceres::AutoDiffCostFunction<PointToPlaneConstraint, 1, 6>(
 			new PointToPlaneConstraint(sourcePoint, targetPoint, targetNormal, weight)
-		);
+			);
 	}
 
 protected:
@@ -189,7 +193,7 @@ protected:
  */
 class ICPOptimizer {
 public:
-	ICPOptimizer() : 
+	ICPOptimizer() :
 		m_bUsePointToPlaneConstraints{ false },
 		m_nIterations{ 20 },
 		m_nearestNeighborSearch{ std::make_unique<NearestNeighborSearchFlann>() }
@@ -300,17 +304,17 @@ private:
 
 				// TODO: Create a new point-to-point cost function and add it as constraint (i.e. residual block) 
 				// to the Ceres problem.
-
+				problem.AddResidualBlock(PointToPointConstraint::create(sourcePoint, targetPoint, match.weight), NULL, poseIncrement.getData());
 
 				if (m_bUsePointToPlaneConstraints) {
 					const auto& targetNormal = targetNormals[match.idx];
 
 					if (!targetNormal.allFinite())
 						continue;
-					 
+
 					// TODO: Create a new point-to-plane cost function and add it as constraint (i.e. residual block) 
 					// to the Ceres problem.
-
+					problem.AddResidualBlock(PointToPlaneConstraint::create(sourcePoint, targetPoint, targetNormal, match.weight), NULL, poseIncrement.getData());
 				}
 			}
 		}

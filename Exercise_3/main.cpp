@@ -8,11 +8,11 @@
 #include "ProcrustesAligner.h"
 #include "PointCloud.h"
 
-#define USE_POINT_TO_PLANE	0
+#define USE_POINT_TO_PLANE	1
 
 #define RUN_PROCRUSTES		0
-#define RUN_SHAPE_ICP		1
-#define RUN_SEQUENCE_ICP	0
+#define RUN_SHAPE_ICP		0
+#define RUN_SEQUENCE_ICP	1
 
 void debugCorrespondenceMatching() {
 	// Load the source and target mesh.
@@ -142,7 +142,7 @@ int alignBunnyWithICP() {
 	// Visualize the resulting joined mesh. We add triangulated spheres for point matches.
 	SimpleMesh resultingMesh = SimpleMesh::joinMeshes(sourceMesh, targetMesh, estimatedPose);
 	resultingMesh.writeMesh(PROJECT_DIR + std::string("/results/bunny_icp.off"));
-	std::cout << "Resulting mesh written." << std::endl;	
+	std::cout << "Resulting mesh written." << std::endl;
 
 	return 0;
 }
